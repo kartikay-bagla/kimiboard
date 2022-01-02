@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Dashboard</title>
+
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@100;300&display=swap" rel="stylesheet">
+
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background-image: url("static/images/background.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            font-family: 'Lato', sans-serif;
+            font-weight: 300;
+            color: #fff;
+        }
+
+        i {
+            color: #fff;
+        }
+
+        h1 {
+            margin: 0;
+            padding-top: 2em;
+            font-weight: 100;
+        }
+
+        :root {
+            --columns: 6;
+            --gap: 1em;
+        }
+
+        .top-padding {
+            padding-top: 4em;
+        }
+
+        .grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--gap);
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            align-self: stretch;
+            background-color: #00000055;
+            width: calc((100% - (var(--columns) - 1) * var(--gap)) / var(--columns));
+            position: relative;
+            overflow: hidden;
+            transition: 300ms;
+            border-radius: 0.5em;
+        }
+
+        .tile.add-tile {
+            border: 2px dashed #ffffff55;
+            transition: 300ms;
+            justify-content: center;
+        }
+
+        .tile.add-tile:hover {
+            border: 2px dashed #55555555;
+        }
+
+        .add-tile-icon {
+            color: #555555;
+        }
+
+        .tile.add-tile:hover>i {
+            color: #AAA;
+        }
+
+        .tile:hover {
+            background-color: #000000AA;
+        }
+
+        .tile img {
+            width: 80%;
+            height: 80%;
+            object-fit: cover;
+            padding-top: 10%;
+        }
+
+        .delete-trigger {
+            position: absolute;
+            top: 0.25em;
+            right: -1em;
+            transition: 300ms;
+        }
+
+        .editing .delete-trigger {
+            right: 0.25em;
+        }
+
+        .tile>ul {
+            min-width: 0;
+            width: fit-content !important;
+            background-color: #333333;
+            transition: 300ms;
+        }
+
+
+        .tile>ul>li {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tile>ul>li:hover {
+            background-color: #555555;
+        }
+
+        .tile>ul>li>i {
+            padding: 0.5em;
+        }
+
+        .btn-floating.btn-large {
+            width: 5em;
+            height: 5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-large i {
+            font-size: 2em;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .contract {
+            width: 0;
+        }
+
+        .modal {
+            max-width: 35vw;
+            padding: 1.5em;
+            border-radius: 0.5em;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container center">
+        <h1 class="white-text">Hello There</h1>
+        <h5 class="white-text">General Kenobi</h5>
+
+        <div class="grid top-padding">
+            {% for tilename in tiles %}
+            {% set tile = tiles[tilename] %}
+            <div class="tile" href="{{tile['url']}}" target="_blank">
+                <img src="{{tile['icon']}}" alt="">
+                <p class="white-text">{{tilename}}</p>
+                <i class="material-icons delete-trigger">delete</i>
+            </div>
+            {% endfor %}
+            <div class="tile add-tile hidden contract" href="" target="_blank">
+                <i class="large material-icons add-tile-icon">add</i>
+            </div>
+        </div>
+    </div>
+
+    <div id="tile-modal" class="modal">
+        <div class="row">
+            <center>
+                <p style="color: red;" id="error-message"></p>
+            </center>
+            <div class="input-field col s12">
+                <input id="name" type="text" class="validate">
+                <label for="name">Name</label>
+            </div>
+            <div class="input-field col s12">
+                <input id="icon" type="text" class="validate">
+                <label for="icon">Icon URL</label>
+            </div>
+            <div class="input-field col s12">
+                <input id="url" type="text" class="validate">
+                <label for="url">Link</label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-grey btn-flat" id="modal-action-button">ADD</a>
+            <a href="#!" class="modal-close waves-effect waves-grey btn-flat">Cancel</a>
+        </div>
+    </div>
+
+
+    <div class="fixed-action-btn">
+        <a class="btn-floating btn-large waves-effect waves-light grey darken-2">
+            <i class="large material-icons">mode_edit</i>
+        </a>
+    </div>
+
+    <!--JavaScript at end of body for optimized loading-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+
+        function updateModal(modal, tile) {
+            modal.setAttribute('data-old-name', tile.querySelector('p').innerText);
+            modal.querySelector('#modal-action-button').innerText = 'UPDATE';
+            modal.querySelector('#name').value = tile.querySelector('p').innerText;
+            modal.querySelector('#icon').value = tile.querySelector('img').src;
+            modal.querySelector('#url').value = tile.getAttribute('href');
+        }
+
+        function resetModal(modal) {
+            modal.setAttribute('data-old-name', '');
+            modal.querySelector('#modal-action-button').innerText = 'ADD';
+            modal.querySelector('#name').value = '';
+            modal.querySelector('#icon').value = '';
+            modal.querySelector('#url').value = '';
+        }
+
+        async function deleteTile(tile) {
+            await fetch(
+                "/tile/delete",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name: tile.querySelector('p').innerText
+                    })
+                }
+            );
+            window.location.reload(true);
+        }
+
+        async function updateTile(modal) {
+            await fetch(
+                "/tile/update",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        oldName: modal.getAttribute('data-old-name'),
+                        name: modal.querySelector('#name').value,
+                        icon: modal.querySelector('#icon').value,
+                        url: modal.querySelector('#url').value
+                    })
+                }
+            );
+            window.location.reload(true);
+        }
+
+        async function addTileFunction(modal) {
+            await fetch(
+                "/tile/add",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name: modal.querySelector('#name').value,
+                        icon: modal.querySelector('#icon').value,
+                        url: modal.querySelector('#url').value
+                    })
+                }
+            );
+            window.location.reload(true);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const modalElement = document.querySelector('.modal')
+            console.log(modalElement);
+            const modalInstance = M.Modal.init(modalElement, { dismissible: false });
+            console.log(modalInstance);
+
+            modalElement.querySelector("#modal-action-button").addEventListener('click', async function () {
+                if (modalElement.querySelector('#modal-action-button').innerText == 'ADD') {
+                    addTileFunction(modalElement);
+                } else {
+                    updateTile(modalElement);
+                }
+                modalInstance.close();
+            });
+
+            const tiles = document.querySelectorAll(".tile");
+            tiles.forEach(tile => {
+                if (tile.classList.contains("add-tile")) {
+                    return;
+                }
+                tile.addEventListener("click", e => {
+                    if (!tile.classList.contains("editing")) {
+                        window.open(tile.getAttribute("href"), '_blank');
+                    }
+                    else {
+                        updateModal(modalElement, tile);
+
+                        modalInstance.open();
+
+                        console.log(name, url, icon);
+                    }
+                })
+
+                const deleteButton = tile.querySelector(".delete-trigger");
+                deleteButton.addEventListener("click", e => {
+                    e.stopPropagation();
+                    deleteTile(tile);
+                });
+
+            });
+
+
+            const addTile = document.querySelector(".add-tile");
+            addTile.addEventListener("click", e => {
+                resetModal(modalElement);
+                modalInstance.open();
+            });
+
+            const fab = document.querySelector('.fixed-action-btn');
+            const fabIcon = fab.querySelector("i");
+            M.FloatingActionButton.init(fab);
+            fab.addEventListener("click", e => {
+                tiles.forEach(tile => tile.classList.toggle("editing"));
+
+                if (fabIcon.innerText === "edit" || fabIcon.innerText === "mode_edit") {
+                    fabIcon.innerText = "close";
+                    addTile.classList.toggle("hidden");
+                    setTimeout(() => {
+                        addTile.classList.toggle("contract");
+                    }, 0);
+                }
+                else {
+                    fabIcon.innerText = "edit";
+                    addTile.classList.toggle("contract");
+                    setTimeout(() => {
+                        addTile.classList.toggle("hidden");
+                    }, 300);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,9 @@
+-r requirements.txt
+
+pytest
+black
+flake8
+flake8-blind-except
+flake8-isort
+isort
+pep8-naming

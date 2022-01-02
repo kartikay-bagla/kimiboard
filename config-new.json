@@ -1,0 +1,17 @@
+{
+    "users": {
+        "kartikay": {
+            "password": "pbkdf2:sha256:260000$ZEyGqSKRTl0O6LEU$7c2a1cec48dfaf881ca28ebdb84648ef12e7ea58bd695de1b4a462c3c65fff1b",
+            "tiles": {
+                "Focalboard": {
+                    "url": "https://fb.karb.cc",
+                    "icon": "static/images/icons/focalboard.png"
+                },
+                "Focalboard3": {
+                    "url": "https://fb.karb.cc",
+                    "icon": "static/images/icons/focalboard.png"
+                }
+            }
+        }
+    }
+}
