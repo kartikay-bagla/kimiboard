@@ -2,9 +2,10 @@ import json
 
 from flask import Flask
 
-from server_dashboard.commands import encrypt, lint, test
+from server_dashboard.commands import lint, reinstall_db, test
+from server_dashboard.extensions import db, login_manager, migrate
 from server_dashboard.logger import configure_logger
-from server_dashboard.utils import get_current_config
+from server_dashboard.models.user import User
 
 
 def create_app(config_object="server_dashboard.settings"):
@@ -18,8 +19,9 @@ def create_app(config_object="server_dashboard.settings"):
     app = Flask("server_dashboard")
 
     app.config.from_object(config_object)
-    app.config["DASHBOARD_CONFIG"] = get_current_config()
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+    register_extensions(app)
     register_blueprints(app)
     register_errorhandlers(app)
     register_shellcontext(app)
@@ -27,6 +29,21 @@ def create_app(config_object="server_dashboard.settings"):
     configure_logger(app)
 
     return app
+
+
+def register_extensions(app):
+    """Register extensions."""
+
+    db.init_app(app)
+    login_manager.init_app(app)
+    migrate.init_app(app, db)
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        """Load user."""
+        return User.query.get(user_id)
+
+    return None
 
 
 def register_blueprints(app):
@@ -70,7 +87,7 @@ def register_shellcontext(app):
 
     def shell_context():
         """Shell context objects."""
-        return {}
+        return {"db": db}
 
     app.shell_context_processor(shell_context)
 
@@ -82,6 +99,6 @@ def register_commands(app):
 
     app.cli.add_command(test)
     app.cli.add_command(lint)
-    app.cli.add_command(encrypt)
+    app.cli.add_command(reinstall_db)
 
     return None

@@ -1,36 +1,27 @@
-from flask import Blueprint, current_app, jsonify, request, session
+import json
 
-from server_dashboard.utils import login_required, update_config
+from flask import Blueprint, jsonify, request
+from flask_login import current_user, login_required
+
+from server_dashboard.extensions import db
+from server_dashboard.models.tile import Tile
 
 tile_route = Blueprint("tile", __name__)
 
 
-@tile_route.route("/delete", methods=["POST"])
+@tile_route.route("/", methods=["GET"])
 @login_required
-def delete():
-    data = request.get_json()
-    username = session["username"]
-
-    config = current_app.config["DASHBOARD_CONFIG"]
-    tiles = config["users"][username]["tiles"]
-
-    if data["name"] not in tiles:
-        return jsonify({"error": "Tile does not exist"}), 400
-
-    del tiles[data["name"]]
-    update_config(config)
-
-    return jsonify({"message": "Tile deleted successfully."})
+def get_tiles():
+    """Get all tiles."""
+    tiles = Tile.query.filter_by(user_id=current_user.id).all()
+    return jsonify([tile.as_dict for tile in tiles])
 
 
-@tile_route.route("/add", methods=["POST"])
+@tile_route.route("/", methods=["POST"])
 @login_required
-def add():
-    data = request.get_json()
-    username = session["username"]
-
-    config = current_app.config["DASHBOARD_CONFIG"]
-    tiles = config["users"][username]["tiles"]
+def create_tile():
+    """Create a new tile."""
+    data = json.loads(request.data)
 
     try:
         name = data["name"]
@@ -39,43 +30,52 @@ def add():
     except KeyError:
         return jsonify({"error": "Missing name, url or icon"}), 400
 
-    if name in tiles:
-        return jsonify({"error": "Tile already exists"}), 400
-
-    tiles[name] = {
-        "url": url,
-        "icon": icon,
-    }
-    update_config(config)
-
-    return jsonify({"message": "Tile added successfully."})
+    tile = Tile(name=name, url=url, icon=icon, user_id=current_user.id)
+    db.session.add(tile)
+    db.session.commit()
+    return jsonify({"message": "Tile created successfully."})
 
 
-@tile_route.route("/update", methods=["POST"])
+@tile_route.route("/<int:tile_id>", methods=["GET"])
 @login_required
-def update():
-    data = request.get_json()
-    username = session["username"]
+def get_tile(tile_id):
+    """Get a tile by id."""
+    tile = Tile.query.filter_by(id=tile_id, user_id=current_user.id).first()
+    return jsonify(tile.as_dict)
 
-    config = current_app.config["DASHBOARD_CONFIG"]
-    tiles = config["users"][username]["tiles"]
+
+@tile_route.route("/<int:tile_id>", methods=["PUT"])
+@login_required
+def update_tile(tile_id):
+    """Update a tile."""
+    data = json.loads(request.data)
 
     try:
-        old_name = data["oldName"]
         name = data["name"]
         url = data["url"]
         icon = data["icon"]
     except KeyError:
-        return jsonify({"error": "Missing name, oldName, url or icon"}), 400
+        return jsonify({"error": "Missing name, url or icon"}), 400
 
-    if old_name not in tiles:
+    tile = Tile.query.filter_by(id=tile_id, user_id=current_user.id).first()
+    if not tile:
         return jsonify({"error": "Tile does not exist"}), 400
 
-    del tiles[old_name]
-    tiles[name] = {
-        "url": url,
-        "icon": icon,
-    }
-    update_config(config)
-
+    tile.name = name
+    tile.url = url
+    tile.icon = icon
+    db.session.commit()
     return jsonify({"message": "Tile updated successfully."})
+
+
+@tile_route.route("/<int:tile_id>", methods=["DELETE"])
+@login_required
+def delete_tile(tile_id):
+    """Delete a tile."""
+    tile = Tile.query.filter_by(id=tile_id, user_id=current_user.id).first()
+    if not tile:
+        return jsonify({"error": "Tile does not exist"}), 400
+
+    db.session.delete(tile)
+    db.session.commit()
+    return jsonify({"message": "Tile deleted successfully."})

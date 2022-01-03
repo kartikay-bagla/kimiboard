@@ -3,7 +3,7 @@ from glob import glob
 from subprocess import call
 
 import click
-from werkzeug.security import generate_password_hash
+from flask.cli import with_appcontext
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 PROJECT_ROOT = os.path.join(HERE, os.pardir)
@@ -65,6 +65,16 @@ def lint(fix_imports, check):
 
 
 @click.command()
-@click.argument("plaintext", required=True)
-def encrypt(plaintext):
-    click.echo(generate_password_hash(plaintext))
+@with_appcontext
+def reinstall_db():
+    """Delete the db and reinstall again."""
+    from server_dashboard.extensions import db
+
+    if click.confirm("Do you want to delete and reinstall the database?"):
+        click.echo("Deleting the database...")
+        db.drop_all()
+        click.echo("Creating the database...")
+        db.create_all()
+        click.echo("Done!")
+    else:
+        click.echo("Aborting the reinstall...")

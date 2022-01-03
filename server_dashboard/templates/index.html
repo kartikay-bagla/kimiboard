@@ -177,11 +177,10 @@
         <h5 class="white-text">General Kenobi</h5>
 
         <div class="grid top-padding">
-            {% for tilename in tiles %}
-            {% set tile = tiles[tilename] %}
-            <div class="tile" href="{{tile['url']}}" target="_blank">
+            {% for tile in tiles %}
+            <div class="tile" data-id="{{tile['id']}}" data-url="{{tile['url']}}" target="_blank">
                 <img src="{{tile['icon']}}" alt="">
-                <p class="white-text">{{tilename}}</p>
+                <p class="white-text">{{tile["name"]}}</p>
                 <i class="material-icons delete-trigger">delete</i>
             </div>
             {% endfor %}
@@ -227,15 +226,15 @@
     <script>
 
         function updateModal(modal, tile) {
-            modal.setAttribute('data-old-name', tile.querySelector('p').innerText);
+            modal.setAttribute('data-id', tile.getAttribute('data-id'));
             modal.querySelector('#modal-action-button').innerText = 'UPDATE';
             modal.querySelector('#name').value = tile.querySelector('p').innerText;
             modal.querySelector('#icon').value = tile.querySelector('img').src;
-            modal.querySelector('#url').value = tile.getAttribute('href');
+            modal.querySelector('#url').value = tile.getAttribute('data-url');
         }
 
         function resetModal(modal) {
-            modal.setAttribute('data-old-name', '');
+            modal.setAttribute('data-id', '');
             modal.querySelector('#modal-action-button').innerText = 'ADD';
             modal.querySelector('#name').value = '';
             modal.querySelector('#icon').value = '';
@@ -244,30 +243,21 @@
 
         async function deleteTile(tile) {
             await fetch(
-                "/tile/delete",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        name: tile.querySelector('p').innerText
-                    })
-                }
+                "/tile/" + tile.getAttribute('data-id'),
+                { method: 'DELETE' }
             );
             window.location.reload(true);
         }
 
         async function updateTile(modal) {
             await fetch(
-                "/tile/update",
+                "/tile/" + modal.getAttribute('data-id'),
                 {
-                    method: "POST",
+                    method: "PUT",
                     headers: {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        oldName: modal.getAttribute('data-old-name'),
                         name: modal.querySelector('#name').value,
                         icon: modal.querySelector('#icon').value,
                         url: modal.querySelector('#url').value
@@ -279,7 +269,7 @@
 
         async function addTileFunction(modal) {
             await fetch(
-                "/tile/add",
+                "/tile/",
                 {
                     method: "POST",
                     headers: {
@@ -318,7 +308,7 @@
                 }
                 tile.addEventListener("click", e => {
                     if (!tile.classList.contains("editing")) {
-                        window.open(tile.getAttribute("href"), '_blank');
+                        window.open(tile.getAttribute("data-url"), '_blank');
                     }
                     else {
                         updateModal(modalElement, tile);
