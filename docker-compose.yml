@@ -1,0 +1,18 @@
+version: "3.7"
+services:
+  server_dashboard:
+    container_name: server_dashboard
+    build: .
+    command: sh run_docker.sh
+    volumes:
+      - ./server_dashboard/static:/app/server_dashboard/static
+      - ./db:/app/db
+    environment:
+      - FLASK_APP=${FLASK_APP}
+      - FLASK_ENV=${FLASK_ENV}
+      - FLASK_DEBUG=${FLASK_DEBUG}
+      - FLASK_RUN_PORT=${FLASK_RUN_PORT}
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+    ports:
+      - 6969:${FLASK_RUN_PORT}

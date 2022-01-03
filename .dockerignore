@@ -1,0 +1,7 @@
+__pycache__/
+server_dashboard/static
+.gitignore
+.git
+Pipfile
+Pipfile.lock
+db/db.sqlite

@@ -2,6 +2,7 @@ flask
 Flask-SQLAlchemy
 Flask-Login
 Flask-Migrate
+gunicorn
 
 python-dotenv
 python-json-logger
